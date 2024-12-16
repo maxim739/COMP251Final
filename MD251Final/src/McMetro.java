@@ -60,6 +60,7 @@ public class McMetro {
             System.out.println("ID hashcode: " +System.identityHashCode(id));
             System.out.println("id node hashcode: "+node);
             System.out.println(properties.get(id).getColor());*/
+            //newline
         }
         // Now we need to identify the source node - make it's distance 0 and the color grey
         // We keep the previous building as null
