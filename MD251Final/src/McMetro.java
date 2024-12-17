@@ -1,5 +1,4 @@
 import java.util.*;
-import java.lang.Math.*;
 
 /* Acknowledgments
 I implemented the merge and sort functions for the bestMetroSystem() method with some research from the
@@ -9,14 +8,14 @@ I implemented the merge and sort functions for the bestMetroSystem() method with
 public class McMetro {
     protected Track[] tracks;
     protected HashMap<BuildingID, Building> buildingTable = new HashMap<>();
+    protected Tree Trees;
 
     // You may initialize anything you need in the constructor
     McMetro(Track[] tracks, Building[] buildings) {
-       this.tracks = tracks;
-        // Put the init for the passengers here
-            // Arraylist? look at the imp on page
-       // Populate buildings table
-       for (Building building : buildings) {
+        this.tracks = tracks;
+        this.Trees = new Tree();
+        // Populate buildings table
+        for (Building building : buildings) {
            buildingTable.putIfAbsent(building.id(), building);
        }
     }
@@ -60,7 +59,7 @@ public class McMetro {
             System.out.println("ID hashcode: " +System.identityHashCode(id));
             System.out.println("id node hashcode: "+node);
             System.out.println(properties.get(id).getColor());*/
-            //newlin
+            
         }
         // Now we need to identify the source node - make it's distance 0 and the color grey
         // We keep the previous building as null
@@ -260,7 +259,6 @@ public class McMetro {
         //}
     }
 
-
     TrackID[] bestMetroSystem() {
         // Implementation of Kruskal's
         // Make sure you impleement so that the tracks are undirected
@@ -305,16 +303,8 @@ public class McMetro {
 
 
     void addPassenger(String name) {
-
-        // TODO: your implementation here
-        // Add a passenger to the arraylist that we created in the initialization
-        // We need to create a prefix tree somehow
-        // We make a new tree for each first character, space complexity not the greatest here
-        // Need to make a new private class tree datatype thing
-        // Adding another passenger w the same name will not change tree
-        // Make all uppercase, then return just first upper, the rest lower (int the list)
-        // Look at java util treemap()
-        // Use our disjoint set class
+        name.toLowerCase();
+        this.Trees.add(name);
     }
 
     // Do not change this
@@ -326,12 +316,10 @@ public class McMetro {
 
     // Returns all passengers in the system whose names start with firstLetters
     ArrayList<String> searchForPassengers(String firstLetters) {
-        // TODO: your implementation here
-        // Create a new arraylist
-        // look for the largest tree with these letters, then add all permutations of the largest tree to the arraylist
-        // Return empty list when null or no string is entered
-
-        return new ArrayList<>();
+        firstLetters.toLowerCase();
+        ArrayList<String> ret = new ArrayList<>();
+        ret = this.Trees.permutations(firstLetters);
+        return ret;
     }
 
     // Implimented these instances of merge and sort using the same resource as before -
