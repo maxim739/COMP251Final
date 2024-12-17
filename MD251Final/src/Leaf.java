@@ -51,4 +51,13 @@ public class Leaf implements Comparable<Leaf>{
             }
         }
     }
+
+    void printLeaf() {
+        if (this.end) {
+            System.out.println(this.val+" -| ");
+        } else { System.out.println(this.val+" - "); }
+        for (Character c : this.children.keySet()) {
+            children.get(c).printLeaf();
+        }
+    }
 }

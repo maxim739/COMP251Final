@@ -3,6 +3,9 @@ import java.util.*;
 /* Acknowledgments
 I implemented the merge and sort functions for the bestMetroSystem() method with some research from the
     website JavaTPoint at https://www.javatpoint.com/merge-sort
+For the Trie data structure implimentation in search and add names the below resources were used for my understanding
+    Stringology - Sasha Bell, Tiffany Young
+    https://www.geeksforgeeks.org/introduction-to-trie-data-structure-and-algorithm-tutorials/ - Geeks For Geeks
 */
 
 public class McMetro {
@@ -15,9 +18,11 @@ public class McMetro {
         this.tracks = tracks;
         this.Trees = new Tree();
         // Populate buildings table
-        for (Building building : buildings) {
-           buildingTable.putIfAbsent(building.id(), building);
-       }
+        if (buildings != null){
+            for (Building building : buildings) {
+                buildingTable.putIfAbsent(building.id(), building);
+            }
+        }
     }
 
     BuildingID dequeue(HashMap<BuildingID, Node> hash, ArrayList<BuildingID> queue) {
@@ -303,7 +308,8 @@ public class McMetro {
 
 
     void addPassenger(String name) {
-        name.toLowerCase();
+        name = name.toLowerCase();
+        //System.out.println(name);
         this.Trees.add(name);
     }
 
@@ -316,7 +322,7 @@ public class McMetro {
 
     // Returns all passengers in the system whose names start with firstLetters
     ArrayList<String> searchForPassengers(String firstLetters) {
-        firstLetters.toLowerCase();
+        firstLetters = firstLetters.toLowerCase();
         ArrayList<String> ret = new ArrayList<>();
         ret = this.Trees.permutations(firstLetters);
         return ret;
