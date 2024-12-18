@@ -1,9 +1,13 @@
 import java.util.*;
 
 /* Acknowledgments
+For my understanding of edmonds-karp algorithm I referenced:
+    - https://www.w3schools.com/dsa/dsa_algo_graphs_edmondskarp.php
+
 I implemented the merge and sort functions for the bestMetroSystem() method with some research from the
     website JavaTPoint at https://www.javatpoint.com/merge-sort
-For the Trie data structure implimentation in search and add names the below resources were used for my understanding
+
+For the Trie data structure implementation in search and add names the below resources were used for my understanding
     Stringology - Sasha Bell, Tiffany Young
     https://www.geeksforgeeks.org/introduction-to-trie-data-structure-and-algorithm-tutorials/ - Geeks For Geeks
 */
@@ -25,180 +29,125 @@ public class McMetro {
         }
     }
 
-    BuildingID dequeue(HashMap<BuildingID, Node> hash, ArrayList<BuildingID> queue) {
-        BuildingID ret = null;
-        //int buildingID = -1;
-        int lowVal = -1;
-
-        for (BuildingID build : queue) {
-            int thisDist = hash.get(build).getDistance();
-            if (thisDist < lowVal || lowVal == -1) {
-                lowVal = thisDist;
-                //buildingID = this.buildingTable.get(build).retId();
-                ret = build;
-            }
-        }
-
-
-        try {
-            queue.remove(ret);
-            //System.out.println("Removed: "+ret.toString());
-        } catch (Exception e) {
-            System.err.println("The buildingID: "+ret+" does not exist in the HashMap.");
-        }
-        /*System.out.println("Coming out of dequque: ");
-        System.out.println("Hash is: "+hash);
-        System.out.println("Ret is: " + ret);*/
-        return ret;     // return the closest building
-    }
-
-    ArrayList<BuildingID> shortestPath(BuildingID source, BuildingID sink, HashMap<BuildingID, Building> buildings, ArrayList<Track> tracks ) {
-        // we are going to run the BFS to get the shortest distance from source to sink
-        ArrayList<BuildingID> ret = new ArrayList<>();   // Return array
-        HashMap<BuildingID, Node> properties = new HashMap<>();     // New Hashmap from buildingID to it's properties
-        // Colors White = 0, Grey = 1, Black = 2
-        for (BuildingID id : buildings.keySet()) {   // Initialize the array we are going to use
-            Node node = new Node(null, 0, -1);
-            properties.put(id, node);
-            /*System.out.println("ID: "+id.getIdNum()+" -> Color: "+node.getColor()+" Dist: "+node.getDistance());
-            System.out.println("ID hashcode: " +System.identityHashCode(id));
-            System.out.println("id node hashcode: "+node);
-            System.out.println(properties.get(id).getColor());*/
-            
-        }
-        // Now we need to identify the source node - make it's distance 0 and the color grey
-        // We keep the previous building as null
-        properties.get(source).chColor(1);
-        properties.get(source).chDistance(0);
-
-        // Make the priority queue
-        ArrayList<BuildingID> queue = new ArrayList<>();  // Made a new arraylist type to dequeue
-
-        // Start BFS while loop
-        queue.add(source);
-        while (!(queue.isEmpty())) {
-            // Dequeue a buildingID
-            BuildingID v = this.dequeue(properties, queue);
-            /*System.out.println("v hashcode: "+System.identityHashCode(v));
-            System.out.println(properties);
-            System.out.println("v node hashcode: "+properties.get(v));
-            System.out.println(properties.get(v).getColor());*/
-            //System.out.println("In shortest path while loop");
-
-            // For all neighbors of v - we need to find all outgoing nodes of v and create a list of
-                // all neighbors
-            ArrayList<BuildingID> neighbors = new ArrayList<>();
-            for (Track tr : tracks) { if (tr.startBuildingId() == v) { neighbors.add(tr.endBuildingId()); } }
-            // Now go through each neighbor as BFS would do
-            for (BuildingID neigh : neighbors) {
-                //System.out.println("Neighbor: "+neigh.getIdNum());
-                if (properties.get(neigh).getColor() == 0) {
-                    properties.get(neigh).chColor(1);
-                    queue.add(neigh);
-                    //System.out.println("Adding: "+neigh.getIdNum()+" to queue");
-                    properties.get(neigh).chDistance(properties.get(neigh).getDistance() + 1);
-                    properties.get(neigh).chPrevious(buildingTable.get(v));
-                }
-            }
-            properties.get(v).chColor(2);
-        }
-        // Now we should have all of the nodes labelled with their proper distances and colors
-        // Look from sink to source with previous' to construct an arraylist of the shortest path
-        BuildingID prev = properties.get(sink).getPrevious().id();
-        //BuildingID prev = null;
-        /*try { prev = properties.get(sink).getPrevious().id(); }
-        catch (NullPointerException e) { return ret; }*/
-        //System.out.println("Prev is: "+prev+" Source is: "+source);
-        ret.addFirst(sink);
-        while (null != properties.get(prev).getPrevious()) {
-            ret.addFirst(prev);
-            prev = properties.get(prev).getPrevious().id();
-        }
-        //System.out.println("Shortest Path is: "+ret);
-        return ret;
-    }
-
-    ArrayList<Track> getTracks(ArrayList<BuildingID> builds, BuildingID source) {
+    // BFS implementation as seen in class
+    ArrayList<Track> bfs(HashMap<BuildingID, ArrayList<BuildingID>> adj, BuildingID start, BuildingID end, HashMap<BuildingID, Node> info, int bottleNeck, HashMap<Track, Integer> capLeft) {
+        // return the shortest path between two nodes
         ArrayList<Track> ret = new ArrayList<>();
-        if(1 == builds.size()) {
-            for (Track tr : this.tracks) {
-                if (tr.startBuildingId().getIdNum() == source.getIdNum()) {
-                    ret.add(tr);
-                    break;
-                }
-            }
+
+        if(null == adj.get(start)) {
+            return ret;
         } else {
-            for (int i = 0; i != builds.size(); i++) {
-                //System.out.println(i + "th element");
-                for (Track tr : this.tracks) {
-                    if (tr.startBuildingId().getIdNum() == builds.get(i).getIdNum() &&
-                            tr.endBuildingId().getIdNum() == builds.get(i + 1).getIdNum()) {
-                        ret.add(tr);
-                        break;
-                    }
+            Node tmp = info.get(start);
+            tmp.chDistance(0);
+            tmp.chColor(1);
+            tmp.chPrevious(null);
+        }
+
+        Queue queue = new Queue();
+        queue.enqueue(info.get(start));
+
+        while (!(queue.queue.isEmpty())) {
+            Node v = queue.dequeue();
+            // Find the corresponding building
+            BuildingID here = null;
+            for(BuildingID b : info.keySet()){
+                if (info.get(b) == v) {
+                    here = b;
                 }
             }
+            if (here == null){
+                System.out.println("Messed up");
+                return ret;
+            }
+            for (BuildingID build : adj.get(here)){
+                Node tmp = info.get(build);
+                if (tmp.getColor() == 0) {
+                    tmp.chColor(1);
+                    queue.enqueue(tmp);
+                    tmp.chPrevious(here);
+                    tmp.chDistance(info.get(here).getDistance() + 1);
+                }
+            }
+            info.get(here).chColor(2);
+        }
+
+        ArrayList<BuildingID> ret2 = new ArrayList<>();
+        Node tmp = info.get(end);
+        ret2.add(end);
+        while (tmp.getPrevious() != null) {
+            ret2.add(0,tmp.getPrevious());
+            tmp = info.get(tmp.getPrevious());
+        }
+
+        int i;
+        int j = 1;
+        for (i = 0; j < ret2.size(); i++) {
+            for (Track tr : tracks) {
+                if ((0 == tr.startBuildingId().compareTo(ret2.get(i))) && (0 == tr.endBuildingId().compareTo(ret2.get(j)))) {
+                    ret.add(tr);
+                }
+                if (capLeft.get(tr) < bottleNeck) {
+                    bottleNeck = capLeft.get(tr);
+                }
+            }
+
+            j++;
         }
         return ret;
     }
 
     // Maximum number of passengers that can be transported from start to end
     int maxPassengers(BuildingID start, BuildingID end) {
-        ArrayList<Track> augTracks = new ArrayList<>();
-        for (Track tr : tracks) {augTracks.add(tr);}    // Create arraylist deepish copy of tracks so we can augment
-        HashMap<BuildingID, Building> augBuilding = new HashMap<>();
-        for (BuildingID id : buildingTable.keySet()) {  // Create a deep(ish) copy of the array so we can modify it
-            augBuilding.put(id, buildingTable.get(id));
-        }
-        HashMap<Track, Integer> currFlow = new HashMap<>();
-        for (Track tr : tracks) { currFlow.put(tr, 0); }    // Each track now contains a currFlow field
-        // When currFlow = capacity, remove it from the array we feed into the BFS
+        // IF THERE IS NO TRACK CONNECTING THE TWO BUILDINGS, NO ONE CAN TRAVEL BETWEEN THEM
+        // Map flow to each track we have
+        HashMap<Track, Integer> capLeft = new HashMap<>();
+        for (Track tr : capLeft.keySet()) { capLeft.put(tr, tr.capacity()); }   // 0 on all edges to start
 
-        // Do the Edmonds-Karp algorithm
-        ArrayList<BuildingID> shortest = this.shortestPath(start, end,  augBuilding, augTracks);    // The first BFS
-        while (!(shortest.isEmpty())) {
-            // Adjust flow values and remove pipes from BFS when they have no more flow avaliable
-            // Bottleneck calc
-            int bottleNeck = -1;
-            ArrayList<Track> currTracks= getTracks(shortest, start);
-            //System.out.println("Currtracks: "+currTracks);
-
-            // Calculate the bottleneck value of the track
-            for (Track tr : currTracks) {
-                int poten = tr.capacity() - currFlow.get(tr);   // Avaliable max flow
-                if (poten < bottleNeck || bottleNeck == -1) { bottleNeck = poten; }
-            }
-            //System.out.println(bottleNeck);
-            if (bottleNeck == -1) {System.out.println("Bottleneck is till -1 :("); return -1;}
-
-            // Aug all tracks on the path - remove them if they have no more capacity left
-            for (Track tr : currTracks) {
-                currFlow.put(tr, currFlow.get(tr) + bottleNeck);    // Now update the avaliable flow of the track
-                if (tr.capacity() == currFlow.get(tr)) { augTracks.remove(tr); }    // Remove if no more cap left
-            }
-
-            // Calculate new BFS for the new iteration of the while loop
-            shortest = this.shortestPath(start, end, augBuilding, augTracks);
-        }
-        // After loop we should have updated flow values for each track in the tracks array
-        // Look through the tracks going into the sink to see how much flow is being passed
-
-        // When the array is null, check the outgoing flow from source or incoming flow from sink
-        int flow = -1;
-        for (Track tr : tracks) {
-            if (tr.endBuildingId() == end) {
-                if (flow == -1) { flow = 0; }
-                int i = currFlow.get(tr);
-                flow += i;
+        HashMap<BuildingID, ArrayList<BuildingID>> adj = new HashMap<>();
+        for (Track t : tracks) {    // Add every track to adjacency list - going to have to get tracks from the end
+            if (null == adj.get(t.startBuildingId())) {
+                ArrayList<BuildingID> tmp = new ArrayList<>();
+                tmp.add(t.endBuildingId());
+                adj.put(t.startBuildingId(), tmp);
+            } else {
+                adj.get(t.startBuildingId()).add(t.endBuildingId());
             }
         }
-        return flow;    // The maximum incoming flow to the sink
+
+        HashMap<BuildingID, Node> info = new HashMap<>();
+        for (BuildingID b : buildingTable.keySet()) {
+            Node tmp = new Node(null, 0, Integer.MAX_VALUE);
+            info.put(b, tmp);
+        }   // Build a hashmap holding all necessary info
+
+        int bottleNeck = Integer.MAX_VALUE;
+
+        ArrayList<Track> shortest = bfs(adj, start, end, info, bottleNeck, capLeft);
+        while (shortest.size() != 0) {
+            for (Track tr : shortest) {
+                int nw = capLeft.get(tr) - bottleNeck;
+                capLeft.put(tr, nw);
+                if (nw == 0) {
+                    shortest.remove(tr);
+                }
+            }
+            for (Track tr)
+        }
+        // IN ORDER TO REMOVE TRACKS FROM THE CHECKABLE LIST FOR THE BFS, WE NEED A WAY TO ACCESS TRACKS CONSTANT TIME
+        // CREATE FIELD IN ADJACENCY LIST THAT CAN HOLD THE TRACK THAT CONNECTS THE TWO
+            // ALLOW ALL FIELDS TO BE ACCESSED CONSTANT TIME - NO MORE FOR LOOPS
+            // HashMap<BuildingID, HashMap<BuildingID, Object[4]>>
+                //[Track, PrevBuilding, color, distance] - may still need nodes for the graph implementation
+                    // In theory this should work
+
+       // min(source, end, trackcap)
+        return 0;
     }
 
     // The implementation for sort and merge was given by https://www.javatpoint.com/merge-sort
     static void sort(Track[] tracks, HashMap<Track, Integer> values, int start, int finish) {
         if (start < finish) {
-            int m = (start + (finish-1)) / 2;
+            int m = (start + finish) / 2;
             sort(tracks, values, start, m);
             sort(tracks, values, m + 1, finish);
             merge(tracks, values, start, m, finish);
@@ -206,62 +155,46 @@ public class McMetro {
     }
 
     static void merge(Track[] tracks, HashMap<Track, Integer> values, int start, int mid, int finish) {
-        /*if (1 == finish - start) {
-            // We are in the trivial case
-            int v1 = values.get(tracks[start]);
-            int v2 = values.get(tracks[finish]);
-            if (v1 < v2) {
-                Track temp = tracks[start];
-                tracks[start] = tracks[finish];
-                tracks[finish] = temp;
-            }   // Otherwise we are in the right order
-        } else {*/
-            int one = mid - start + 1;
-            int two = finish - mid;
+        int one = mid - start + 1;
+        int two = finish - mid;
 
-            //System.out.println(tracks + " Len: " + tracks.length);
-            //System.out.println("Start: " + start + " Mid: " + mid + " Fin: " + finish);
-            //System.out.println("One : " + one + " Two: " + two);
+        Track[] Left = new Track[one];
+        for (int i = 0; i < one; i++) {
+            //System.out.println("Left: " + i);
+            Left[i] = tracks[start + i];
+        }
 
-            Track[] Left = new Track[one];
-            for (int i = 0; i < one; i++) {
-                System.out.println("Left: " + i);
-                Left[i] = tracks[start + i];
-            }
+        Track[] Right = new Track[two];
+        for (int i = 0; i < two; i++) {
+            //System.out.println("Right: " + i);
+            Right[i] = tracks[mid + 1 + i];
+        }
 
-            Track[] Right = new Track[two];
-            for (int i = 0; i < two; i++) {
-                System.out.println("Right: " + i);
-                Right[i] = tracks[mid + 1 + i];
-            }
+        int i = 0;
+        int j = 0;
+        int k = start;
 
-            int i = 0;
-            int j = 0;
-            int k = start;
-
-            while ((i < one) && (j < two)) {
-                if (values.get(Left[i]) >= values.get(Right[j])) {
-                    tracks[k] = Left[i];
-                    i++;
-                } else {
-                    tracks[k] = Right[i];
-                    j++;
-                }
-                k++;
-            }
-
-            while (i < one) {
+        while ((i < one) && (j < two)) {
+            if (values.get(Left[i]) >= values.get(Right[j])) {
                 tracks[k] = Left[i];
                 i++;
-                k++;
-            }
-
-            while (j < two) {
+            } else {
                 tracks[k] = Right[j];
                 j++;
-                k++;
             }
-        //}
+            k++;
+        }
+        while (i < one) {
+            tracks[k] = Left[i];
+            i++;
+            k++;
+        }
+
+        while (j < two) {
+            tracks[k] = Right[j];
+            j++;
+            k++;
+        }
     }
 
     TrackID[] bestMetroSystem() {
@@ -286,9 +219,12 @@ public class McMetro {
         // Sort the tracks based on their goodness value - impliment merge sort
         Track[] sorted = new Track[tracks.length];
         for (int i = 0; i < tracks.length; i++) { sorted[i] = tracks[i]; }
-        sort(sorted, value, 0, sorted.length-1);
+        sort(sorted, value, 0, (sorted.length-1));
         //if (sorted.length > 1) {sort(sorted, value, 0, sorted.length); }    // Otherwise already sorted
         // Now this array should have TrackID's sorted by goodness
+        for (Track tr : sorted) {
+            System.out.println("Track: "+tr.id()+" value: "+value.get(tr));
+        }
 
         for (Track tr : sorted) {
             BuildingID a = buildings.find(tr.startBuildingId());
