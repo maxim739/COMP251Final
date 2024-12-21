@@ -1,0 +1,112 @@
+ArrayList<Track> bfs(HashMap<BuildingID, ArrayList<BuildingID>> adj, BuildingID start, BuildingID end, HashMap<BuildingID, Node> info, int bottleNeck, HashMap<Track, Integer> capLeft) {
+        // return the shortest path between two nodes
+        ArrayList<Track> ret = new ArrayList<>();
+
+        if(null == adj.get(start)) {
+            return ret;
+        } else {
+            Node tmp = info.get(start);
+            tmp.chDistance(0);
+            tmp.chColor(1);
+            tmp.chPrevious(null);
+        }
+		
+
+        Queue queue = new Queue();
+        queue.enqueue(info.get(start));
+
+        while (!(queue.queue.isEmpty())) {
+            Node v = queue.dequeue();
+            // Find the corresponding building
+            BuildingID here = null;
+            for(BuildingID b : info.keySet()){
+                if (info.get(b) == v) {
+                    here = b;
+                }
+            }
+            if (here == null){
+                System.out.println("Messed up");
+                return ret;
+            }
+            for (BuildingID build : adj.get(here)){
+                Node tmp = info.get(build);
+                if (tmp.getColor() == 0) {
+                    tmp.chColor(1);
+                    queue.enqueue(tmp);
+                    tmp.chPrevious(here);
+                    tmp.chDistance(info.get(here).getDistance() + 1);
+                }
+            }
+            info.get(here).chColor(2);
+        }
+
+        ArrayList<BuildingID> ret2 = new ArrayList<>();
+        Node tmp = info.get(end);
+        ret2.add(end);
+        while (tmp.getPrevious() != null) {
+            ret2.add(0,tmp.getPrevious());
+            tmp = info.get(tmp.getPrevious());
+        }
+
+        int i;
+        int j = 1;
+        for (i = 0; j < ret2.size(); i++) {
+            for (Track tr : tracks) {
+                if ((0 == tr.startBuildingId().compareTo(ret2.get(i))) && (0 == tr.endBuildingId().compareTo(ret2.get(j)))) {
+                    ret.add(tr);
+                }
+                if (capLeft.get(tr) < bottleNeck) {
+                    bottleNeck = capLeft.get(tr);
+                }
+            }
+
+            j++;
+        }
+        return ret;
+    }        
+		
+		// IF THERE IS NO TRACK CONNECTING THE TWO BUILDINGS, NO ONE CAN TRAVEL BETWEEN THEM
+        // Map flow to each track we have
+        HashMap<Track, Integer> capLeft = new HashMap<>();
+        for (Track tr : capLeft.keySet()) { capLeft.put(tr, tr.capacity()); }   // 0 on all edges to start
+
+        HashMap<BuildingID, ArrayList<BuildingID>> adj = new HashMap<>();
+        for (Track t : tracks) {    // Add every track to adjacency list - going to have to get tracks from the end
+            if (null == adj.get(t.startBuildingId())) {
+                ArrayList<BuildingID> tmp = new ArrayList<>();
+                tmp.add(t.endBuildingId());
+                adj.put(t.startBuildingId(), tmp);
+            } else {
+                adj.get(t.startBuildingId()).add(t.endBuildingId());
+            }
+        }
+
+        HashMap<BuildingID, Node> info = new HashMap<>();
+        for (BuildingID b : buildingTable.keySet()) {
+            Node tmp = new Node(null, 0, Integer.MAX_VALUE);
+            info.put(b, tmp);
+        }   // Build a hashmap holding all necessary info
+
+        int bottleNeck = Integer.MAX_VALUE;
+
+        ArrayList<Track> shortest = bfs(adj, start, end, info, bottleNeck, capLeft);
+        while (shortest.size() != 0) {
+            for (Track tr : shortest) {
+                int nw = capLeft.get(tr) - bottleNeck;
+                capLeft.put(tr, nw);
+                if (nw == 0) {
+                    shortest.remove(tr);
+                }
+            }
+            for (Track tr)
+        }
+        // IN ORDER TO REMOVE TRACKS FROM THE CHECKABLE LIST FOR THE BFS, WE NEED A WAY TO ACCESS TRACKS CONSTANT TIME
+        // CREATE FIELD IN ADJACENCY LIST THAT CAN HOLD THE TRACK THAT CONNECTS THE TWO
+            // ALLOW ALL FIELDS TO BE ACCESSED CONSTANT TIME - NO MORE FOR LOOPS
+            // HashMap<BuildingID, HashMap<BuildingID, Object[4]>>
+                //[Track, PrevBuilding, color, distance] - may still need nodes for the graph implementation
+                    // In theory this should work
+        // Need to look at ed and if my other functions work, just test one at a time by making others trivially fail
+
+       // min(source, end, trackcap)
+	   

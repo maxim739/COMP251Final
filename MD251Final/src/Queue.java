@@ -8,7 +8,7 @@ public class Queue {
 
     void enqueue(Node in){
         // Need to insert at proper index in queue
-        // fuck it - do it quick - search through list and add in order
+        //System.out.println("Enqueue node: "+in.here);
         int index = 0;
         for(Node n : queue){
             if(in.getDistance() < n.getDistance()) {
@@ -22,6 +22,7 @@ public class Queue {
     Node dequeue(){
         // Return the node at the shortest distance and remove it from the list
         Node ret = queue.getFirst();
+        //System.out.println("Dequeue: "+ret+" distance: "+ret.distance);
         queue.removeFirst();
         return ret;
     }

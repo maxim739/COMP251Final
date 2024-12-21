@@ -1,0 +1,60 @@
+ArrayList<Track> bfs(HashMap<BuildingID, HashMap<Node, Track>> adjList, BuildingID start, BuildingID end) {
+        // return the shortest path between two nodes
+        ArrayList<Track> ret = new ArrayList<>();
+
+        if (adjList.get(start) == null) {
+            return ret;
+        } else {
+            for(Node n : adjList.get(start).keySet()){
+                if(0 == n.getPrevious().compareTo(start)) {     // Because graph is sparse, we can afford to do this
+                    n.chDistance(0);    // Set distance = 0
+                    n.chColor(1);   // Set color to grey
+                    n.chPrevious(null);     // Set previous to null
+                }
+            }
+        }
+        
+
+
+
+
+        return ret;
+    }
+	
+int maxPassengers(BuildingID start, BuildingID end) {
+        // IF THERE IS NO TRACK CONNECTING THE TWO BUILDINGS, NO ONE CAN TRAVEL BETWEEN THEM
+        // Map flow to each track we have
+        HashMap<Track, Integer> flowMap = new HashMap<>();
+        for (Track tr : flowMap.keySet()) { flowMap.put(tr, 0); }   // 0 on all edges to start
+
+        // Implement an adjacency list as a 2D hashmap
+        // BuildingID holds a hash that contains every building it connects to and the track that connects the two
+        HashMap<BuildingID, HashMap<Node, Track>> adj = new HashMap<>();
+        for (Track tr : tracks) {
+            if (adj.get(tr.startBuildingId()) == null) {
+                Node tmp = new Node(tr.endBuildingId(), tr.startBuildingId(), 0, -1);
+                HashMap<Node, Track> tmp1 = new HashMap<>();
+                tmp1.put(tmp, tr);
+            } else {
+                Node tmp = new Node(tr.endBuildingId(), tr.startBuildingId(), 0, -1);
+                adj.get(tr).put(tmp, tr);
+            }
+        }   // Now we have a proper adjacency list ready for a DFS
+
+        ArrayList<Track> shortest = bfs(adj, start, end);
+        while (shortest.size() != 0) {
+            // Adjust w bottleneck, remove some tracks when needed
+            shortest = bfs(adj, start, end);
+        }
+
+
+
+
+        // Need a list of tracks that are on the shortest path
+        // Impliment the graph as an adjacency list - sparse
+        // Use BFS to find the shortest path where more flow can be sent
+
+        // Increase the flow on each edge in augmented graph
+
+        return FLOW
+    }

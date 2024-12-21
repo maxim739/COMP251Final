@@ -7,19 +7,21 @@ public class NaiveDisjointSet<T> {
     void add(T element) { parentMap.put(element, element); rank.put(element, 0); }
 
     T find(T a) {
-        while (parentMap.get(a) != parentMap.get(parentMap.get(a))) {   // While we aren't at the head of a component
-            parentMap.put(a, parentMap.get(a));
+        if (parentMap.get(a) != parentMap.get(parentMap.get(a))) {  // Its parent is not the head
+            parentMap.put(a, parentMap.get(parentMap.get(a)));
+        } else {
+            return parentMap.get(a);
         }
-        return parentMap.get(a);
+        return find(a);
     }
-
-    int getRank(T a) { return this.rank.get(a);}
 
     void union(T a, T b) {
         T a_parent = this.find(a);
         T b_parent = this.find(b);
+        Integer z = a_parent.hashCode();
+        Integer y = b_parent.hashCode();
 
-        if (a_parent != b_parent) {     // They are in different sets
+        if (0 != z.compareTo(y)) {     // They are in different sets
             if (rank.get(a_parent) < rank.get(b_parent)) {  // The rank of a is lower
                 parentMap.put(a_parent, b_parent);  // The parent of a is now the parent of b
                 rank.put(b_parent, (rank.get(b_parent) + 1));   // Increase b's rank
